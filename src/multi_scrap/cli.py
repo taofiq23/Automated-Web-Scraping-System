@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import argparse
-from datetime import UTC, date, datetime
+import logging
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 from multi_scrap.dedup import deduplicate_events
@@ -14,10 +15,18 @@ from multi_scrap.utils.dates import monday_sunday_bounds
 from multi_scrap.week_filter import filter_events_for_week
 
 
+logger = logging.getLogger(__name__)
+
+
 def _parse_week_start(value: str | None) -> date | None:
     if not value:
         return None
     return datetime.strptime(value, "%Y-%m-%d").date()
+
+
+def _week_tab_name(prefix: str, week_start: date, week_end: date) -> str:
+    clean_prefix = prefix.strip() or "Week"
+    return f"{clean_prefix} {week_start.isoformat()} to {week_end.isoformat()}"
 
 
 def parse_args() -> argparse.Namespace:
@@ -69,7 +78,7 @@ def run_weekly(args: argparse.Namespace) -> None:
     export_events_to_csv(all_events_path, deduped)
     export_events_to_csv(weekly_path, weekly_events)
 
-    summary_path = settings.output_dir / f"run_summary_{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}.txt"
+    summary_path = settings.output_dir / f"run_summary_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.txt"
     summary_lines = [
         f"Total sources configured: {len(sources)}",
         f"Total source runs: {len(result.source_summaries)}",
@@ -100,12 +109,18 @@ def run_weekly(args: argparse.Namespace) -> None:
             raise RuntimeError(
                 "GOOGLE_SERVICE_ACCOUNT_FILE and GOOGLE_SPREADSHEET_ID are required for --publish-gsheets"
             )
-        title = f"{settings.google_sheet_prefix}_{week_start.isoformat()}_to_{week_end.isoformat()}"
+        title = _week_tab_name(settings.google_sheet_prefix, week_start, week_end)
         writer = GoogleSheetsWriter(
             service_account_file=settings.google_service_account_file,
             spreadsheet_id=settings.google_spreadsheet_id,
         )
-        writer.write_events(title, weekly_events)
+        rows_written = writer.write_events(title, weekly_events)
+        logger.info(
+            "Weekly publish summary | sheet_id=%s | tab=%s | rows_written=%s",
+            settings.google_spreadsheet_id,
+            title,
+            rows_written,
+        )
         print(f"Google Sheet updated: {title}")
 
 
@@ -131,6 +146,10 @@ def run_analysis(args: argparse.Namespace) -> None:
 
 
 def main() -> None:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+    )
     args = parse_args()
     if args.command == "analyze":
         run_analysis(args)

@@ -7,7 +7,7 @@ name = "multi-scrap"
 version = "0.1.0"
 description = "Automated multi-source event scraper with weekly Google Sheets publishing"
 readme = "docs/README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 dependencies = [
   "beautifulsoup4>=4.12.3",
   "dateparser>=1.2.0",

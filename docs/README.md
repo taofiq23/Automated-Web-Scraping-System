@@ -108,7 +108,7 @@ python -m multi_scrap.cli run-weekly `
 ```
 
 Sheet title format:
-- `Week_YYYY-MM-DD_to_YYYY-MM-DD`
+- `Week YYYY-MM-DD to YYYY-MM-DD`
 
 ## Scheduling requirement (Sunday afternoon/evening GMT+3)
 
