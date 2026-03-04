@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "multi-scrap"
+version = "0.1.0"
+description = "Automated multi-source event scraper with weekly Google Sheets publishing"
+readme = "docs/README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "beautifulsoup4>=4.12.3",
+  "dateparser>=1.2.0",
+  "gspread>=6.1.2",
+  "playwright>=1.54.0",
+  "pydantic>=2.9.2",
+  "python-dotenv>=1.0.1",
+  "pyyaml>=6.0.2",
+  "requests>=2.32.3",
+]
+
+[project.scripts]
+multi-scrap = "multi_scrap.cli:main"
+analyze-sources = "multi_scrap.source_analysis:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

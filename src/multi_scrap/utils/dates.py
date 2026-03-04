@@ -1,0 +1,50 @@
+from __future__ import annotations
+
+from datetime import date, datetime, timedelta
+
+import dateparser
+
+
+def parse_date_time(value: str | None) -> tuple[str, str]:
+    if not value:
+        return "", ""
+    dt = dateparser.parse(
+        value,
+        languages=["es", "en"],
+        settings={
+            "RETURN_AS_TIMEZONE_AWARE": False,
+            "PREFER_DAY_OF_MONTH": "first",
+            "DATE_ORDER": "DMY",
+        },
+    )
+    if not dt:
+        return "", ""
+    return dt.date().isoformat(), dt.strftime("%H:%M")
+
+
+def normalize_date(value: str | None) -> str:
+    date_value, _ = parse_date_time(value)
+    return date_value
+
+
+def normalize_time(value: str | None) -> str:
+    _, time_value = parse_date_time(value)
+    return time_value
+
+
+def monday_sunday_bounds(reference_date: date | None = None, upcoming: bool = True) -> tuple[date, date]:
+    ref = reference_date or date.today()
+    this_monday = ref - timedelta(days=ref.weekday())
+    monday = this_monday + timedelta(days=7) if upcoming else this_monday
+    sunday = monday + timedelta(days=6)
+    return monday, sunday
+
+
+def in_date_range(date_str: str, start: date, end: date) -> bool:
+    if not date_str:
+        return False
+    try:
+        parsed = datetime.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
+        return False
+    return start <= parsed <= end

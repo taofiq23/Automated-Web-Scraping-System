@@ -1,0 +1,595 @@
+sources:
+- source_id: C0001
+  venue_name: Prez - Jazz & Music Club
+  source_url: https://prez.ar/
+  instagram_handle: '@prez.jazz'
+  enabled: true
+  mode: static
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: wordpress
+    feasibility: high
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0002
+  venue_name: Bebop Club (Palermo)
+  source_url: https://www.bebopclub.com.ar/
+  instagram_handle: '@bebopclub'
+  enabled: true
+  mode: static
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: custom
+    feasibility: medium
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0003
+  venue_name: Thelonious Club
+  source_url: https://thelonious.com.ar/
+  instagram_handle: '@theloniousbuenosaires'
+  enabled: true
+  mode: static
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: wix
+    feasibility: medium
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0004
+  venue_name: Virasoro Bar
+  source_url: https://www.virasorobar.com.ar/
+  instagram_handle: '@virasoro_bar'
+  enabled: true
+  mode: static
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: custom
+    feasibility: medium
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0005
+  venue_name: Jazz Voyeur Club
+  source_url: https://jazzvoyeur.com.ar/
+  instagram_handle: '@jazzvoyeurba'
+  enabled: true
+  mode: static
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: wordpress
+    feasibility: high
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0006
+  venue_name: The Lift 1967
+  source_url: https://www.thelift1967.com.ar/
+  instagram_handle: '@thelift1967'
+  enabled: true
+  mode: static
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: wordpress
+    feasibility: medium
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0007
+  venue_name: Centro Cultural Nueva Uriarte (CCNU)
+  source_url: https://ccnuevauriarte.com.ar/
+  instagram_handle: '@ccnuevauriarte'
+  enabled: true
+  mode: static
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: wordpress
+    feasibility: medium
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0008
+  venue_name: Bar de Fondo Cultural
+  source_url: https://galeriabardefondo.com.ar/
+  instagram_handle: '@bardefondocultural'
+  enabled: true
+  mode: static
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: wordpress
+    feasibility: medium
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0009
+  venue_name: Nempla
+  source_url: https://lanempla.com/
+  instagram_handle: '@nempla'
+  enabled: true
+  mode: static
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: wordpress
+    feasibility: medium
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0010
+  venue_name: Swing City Jazz Club
+  source_url: https://www.swingcity.com.ar/
+  instagram_handle: '@swingcity.ba'
+  enabled: false
+  mode: auto
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: unknown
+    feasibility: low
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0011
+  venue_name: Café Berlín Buenos Aires
+  source_url: https://www.cafeberlinbuenosaires.com.ar/
+  instagram_handle: '@cafeberlinbuenosaires'
+  enabled: true
+  mode: static
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: custom
+    feasibility: medium
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0013
+  venue_name: Borges 1975 (Espacio Cultural)
+  source_url: https://www.borges1975.com/
+  instagram_handle: '@borges1975.espacio.cultural'
+  enabled: true
+  mode: playwright
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: custom
+    feasibility: medium
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0014
+  venue_name: La Biblioteca Café
+  source_url: https://labibliotecacafe.com.ar/
+  instagram_handle: '@bibliotecacafemusica'
+  enabled: true
+  mode: static
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: nextjs
+    feasibility: high
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0019
+  venue_name: Centro Cultural Cuerda Mecánica
+  source_url: https://cuerdamecanica.com/
+  instagram_handle: '@cuerdamecanica'
+  enabled: true
+  mode: static
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: wordpress
+    feasibility: medium
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0020
+  venue_name: Cultural Morán
+  source_url: https://www.culturalmoran.com/
+  instagram_handle: '@culturalmoran'
+  enabled: true
+  mode: static
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: custom
+    feasibility: medium
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0021
+  venue_name: Borges 1975 (Espacio Cultural)
+  source_url: https://www.borges1975.com/
+  instagram_handle: '@borges1975.espacio.cultural'
+  enabled: false
+  mode: playwright
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: custom
+    feasibility: medium
+    analysis_note: ''
+    duplicate_of_source_id: C0013
+- source_id: C0022
+  venue_name: Pista Urbana
+  source_url: https://pistaurbana.com.ar/
+  instagram_handle: '@pista_urbana'
+  enabled: false
+  mode: auto
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: unknown
+    feasibility: low
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0023
+  venue_name: Bargoglio
+  source_url: https://bargoglio.com.ar/
+  instagram_handle: '@bargoglio'
+  enabled: false
+  mode: auto
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: unknown
+    feasibility: low
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0028
+  venue_name: Sótano (C Art Media)
+  source_url: https://www.ccomplejoartmedia.com.ar/
+  instagram_handle: '@elsotanodec'
+  enabled: true
+  mode: playwright
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: custom
+    feasibility: medium
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0032
+  venue_name: La Hormiga de Oro
+  source_url: http://www.espaciolahormigadeoro.com
+  instagram_handle: '@lahormigadeoro'
+  enabled: false
+  mode: auto
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: unknown
+    feasibility: low
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0034
+  venue_name: Teatro El Alambique
+  source_url: https://teatroelalambique.com/
+  instagram_handle: '@elalambiquecultural'
+  enabled: false
+  mode: auto
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: unknown
+    feasibility: low
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0036
+  venue_name: Café Vinilo
+  source_url: https://cafevinilo.com.ar/
+  instagram_handle: '@cafeviniloba'
+  enabled: true
+  mode: static
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: wordpress
+    feasibility: medium
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0037
+  venue_name: The Library Lounge (Faena)
+  source_url: https://www.faena.com/buenos-aires/dining/the-library-lounge
+  instagram_handle: '@faenabsas'
+  enabled: true
+  mode: static
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: custom
+    feasibility: medium
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0038
+  venue_name: CAFF (Club Atlético Fernández Fierro)
+  source_url: https://caff.ar/
+  instagram_handle: '@caff.ar'
+  enabled: true
+  mode: static
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: custom
+    feasibility: medium
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0040
+  venue_name: Bar Conde
+  source_url: https://festivalesba.org/bar/bar-conde/
+  instagram_handle: ''
+  enabled: true
+  mode: static
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: wordpress
+    feasibility: medium
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0045
+  venue_name: Hot Club de Boedo (proyecto)
+  source_url: https://hotclubdeboedo.blogspot.com/
+  instagram_handle: ''
+  enabled: true
+  mode: static
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: blogspot
+    feasibility: medium
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0047
+  venue_name: La Carbonera San Telmo
+  source_url: https://lacarbonerasantelmo.com/
+  instagram_handle: '@lacarbonera.santelmo'
+  enabled: true
+  mode: static
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: wordpress
+    feasibility: medium
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0048
+  venue_name: Los Pompapetriyasos / Los Pompas (Parque Patricios)
+  source_url: https://pompapetriyasos.com.ar/
+  instagram_handle: '@lospompas'
+  enabled: true
+  mode: static
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: wordpress
+    feasibility: high
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0051
+  venue_name: Club Social Deluxe
+  source_url: https://holasantelmo.ar/club-social-deluxe/
+  instagram_handle: '@clubsocialdeluxe'
+  enabled: true
+  mode: static
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: wordpress
+    feasibility: medium
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0052
+  venue_name: Bar Los Laureles
+  source_url: https://barloslaureles.negocio.site/
+  instagram_handle: '@barloslaureles'
+  enabled: false
+  mode: auto
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: unknown
+    feasibility: low
+    analysis_note: ''
+    duplicate_of_source_id: ''
+- source_id: C0055
+  venue_name: Espacio Cultural Adán Buenosayres
+  source_url: https://buenosaires.gob.ar/cultura/promocion-cultural/programacion-adan-buenosayres
+  instagram_handle: '@ecadanbuenosayres'
+  enabled: true
+  mode: static
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: government_portal
+    feasibility: medium
+    analysis_note: third_party_platform
+    duplicate_of_source_id: ''
+- source_id: C0056
+  venue_name: El Fino Jazz Club
+  source_url: https://www.alternativateatral.com/espacio570-el-fino-espacio-escenico
+  instagram_handle: '@elfinojazzclub'
+  enabled: true
+  mode: static
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: alternativateatral
+    feasibility: medium
+    analysis_note: third_party_platform
+    duplicate_of_source_id: ''
+- source_id: C0057
+  venue_name: Artlab
+  source_url: https://artlabpro.net/
+  instagram_handle: '@artlabpro'
+  enabled: true
+  mode: static
+  list_url: ''
+  include_link_patterns: []
+  exclude_link_patterns:
+  - instagram\.com
+  - facebook\.com
+  - whatsapp
+  - 'mailto:'
+  metadata:
+    platform: wordpress
+    feasibility: high
+    analysis_note: ''
+    duplicate_of_source_id: ''
