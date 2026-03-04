@@ -26,6 +26,7 @@ class Settings:
     google_service_account_file: str = os.getenv("GOOGLE_SERVICE_ACCOUNT_FILE", "")
     google_spreadsheet_id: str = os.getenv("GOOGLE_SPREADSHEET_ID", "")
     google_sheet_prefix: str = os.getenv("GOOGLE_SHEET_PREFIX", "Week")
+    google_price_currency_label: str = os.getenv("GOOGLE_PRICE_CURRENCY_LABEL", "ARS")
 
 
 def build_settings() -> Settings:

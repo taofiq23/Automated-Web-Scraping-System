@@ -113,6 +113,7 @@ def run_weekly(args: argparse.Namespace) -> None:
         writer = GoogleSheetsWriter(
             service_account_file=settings.google_service_account_file,
             spreadsheet_id=settings.google_spreadsheet_id,
+            price_currency_label=settings.google_price_currency_label,
         )
         rows_written = writer.write_events(title, weekly_events)
         logger.info(

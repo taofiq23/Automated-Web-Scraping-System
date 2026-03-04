@@ -97,6 +97,7 @@ Set `.env`:
 GOOGLE_SERVICE_ACCOUNT_FILE=C:\path\service-account.json
 GOOGLE_SPREADSHEET_ID=<spreadsheet_id>
 GOOGLE_SHEET_PREFIX=Week
+GOOGLE_PRICE_CURRENCY_LABEL=ARS
 ```
 
 Then run:
