@@ -4,7 +4,7 @@ Use this when adding/fixing a venue source.
 
 ## Goal
 
-Choose a stable extraction method per source with verified selectors and no guessing.
+Choose a stable extraction method per source with verified selectors.
 
 ## Workflow
 

@@ -1,15 +1,35 @@
 from __future__ import annotations
 
+import re
 from datetime import date, datetime, timedelta
 
 import dateparser
 
 
+ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+ISO_DATETIME_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$")
+TIME_RE = re.compile(r"^([01]?\d|2[0-3]):[0-5]\d$")
+
+
 def parse_date_time(value: str | None) -> tuple[str, str]:
     if not value:
         return "", ""
+    text = value.strip()
+    if ISO_DATE_RE.match(text):
+        parsed = datetime.strptime(text, "%Y-%m-%d")
+        return parsed.date().isoformat(), "00:00"
+    if ISO_DATETIME_RE.match(text):
+        iso_text = text[:-1] + "+00:00" if text.endswith("Z") else text
+        try:
+            parsed_dt = datetime.fromisoformat(iso_text)
+            return parsed_dt.date().isoformat(), parsed_dt.strftime("%H:%M")
+        except ValueError:
+            pass
+    if TIME_RE.match(text):
+        parsed_time = datetime.strptime(text, "%H:%M")
+        return "", parsed_time.strftime("%H:%M")
     dt = dateparser.parse(
-        value,
+        text,
         languages=["es", "en"],
         settings={
             "RETURN_AS_TIMEZONE_AWARE": False,

@@ -11,10 +11,24 @@ from multi_scrap.utils.text import clean_text
 EVENT_HINT_RE = re.compile(
     r"(?i)(event|events|agenda|programaci[oó]n|show|shows|ticket|tickets|entrada|entradas|concierto|live)"
 )
+TRUSTED_EVENT_DOMAINS = {
+    "livepass.com.ar",
+    "alternativateatral.com",
+    "entradasonline.com.ar",
+    "eventbrite.com",
+    "ticketek.com.ar",
+    "passline.com",
+    "tuentrada.com",
+}
 
 
 def same_domain(url_a: str, url_b: str) -> bool:
     return urlparse(url_a).netloc == urlparse(url_b).netloc
+
+
+def is_trusted_event_domain(url: str) -> bool:
+    host = urlparse(url).netloc.lower()
+    return any(host == domain or host.endswith(f".{domain}") for domain in TRUSTED_EVENT_DOMAINS)
 
 
 def extract_candidate_event_links(
@@ -39,7 +53,7 @@ def extract_candidate_event_links(
         absolute = urldefrag(urljoin(base_url, href))[0]
         if not absolute.startswith(("http://", "https://")):
             continue
-        if same_domain_only and not same_domain(absolute, base_url):
+        if same_domain_only and not same_domain(absolute, base_url) and not is_trusted_event_domain(absolute):
             continue
         haystack = f"{absolute} {text}"
         if include_patterns and not any(re.search(p, haystack, re.IGNORECASE) for p in include_patterns):

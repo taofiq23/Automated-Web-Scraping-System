@@ -58,10 +58,17 @@ def _coerce_price_value(value: str) -> float | str:
 
 
 class GoogleSheetsWriter:
-    def __init__(self, service_account_file: str, spreadsheet_id: str, price_currency_label: str = "ARS"):
+    def __init__(
+        self,
+        service_account_file: str,
+        spreadsheet_id: str,
+        price_currency_label: str = "ARS",
+        header: list[str] | None = None,
+    ):
         self.service_account_file = service_account_file
         self.spreadsheet_id = spreadsheet_id
         self.price_currency_label = price_currency_label or "ARS"
+        self.header = header or SHEET_HEADER
 
     def _client(self):
         import gspread
@@ -89,10 +96,10 @@ class GoogleSheetsWriter:
             row[4] = _coerce_price_value(row[4])  # Ticket Price column
             event_rows.append(row)
 
-        rows = [SHEET_HEADER] + event_rows
+        rows = [self.header] + event_rows
         worksheet.clear()
         worksheet.update("A1", rows, value_input_option="USER_ENTERED")
-        self._apply_presentation_format(worksheet, len(rows), len(SHEET_HEADER))
+        self._apply_presentation_format(worksheet, len(rows), len(self.header))
 
         rows_written = len(events)
         logger.info(

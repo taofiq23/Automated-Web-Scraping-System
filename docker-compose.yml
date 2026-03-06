@@ -1,0 +1,19 @@
+services:
+  scraper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: jazzmap-scraper:latest
+    restart: "no"
+    environment:
+      GOOGLE_SERVICE_ACCOUNT_FILE: /run/secrets/google-service-account.json
+      GOOGLE_SPREADSHEET_ID: ${GOOGLE_SPREADSHEET_ID}
+      GOOGLE_SHEET_PREFIX: ${GOOGLE_SHEET_PREFIX:-Week}
+      GOOGLE_PRICE_CURRENCY_LABEL: ${GOOGLE_PRICE_CURRENCY_LABEL:-ARS}
+      SHEET_HEADER_LANGUAGE: ${SHEET_HEADER_LANGUAGE:-es}
+      ENABLE_PLAYWRIGHT: ${ENABLE_PLAYWRIGHT:-true}
+      OUTPUT_DIR: /app/output
+    volumes:
+      - ./output:/app/output
+      - ${SERVICE_ACCOUNT_JSON_PATH:-/home/agenda/service-account.json}:/run/secrets/google-service-account.json:ro
+    command: ["python", "-m", "multi_scrap.cli", "run-weekly", "--current-week", "--publish-gsheets"]

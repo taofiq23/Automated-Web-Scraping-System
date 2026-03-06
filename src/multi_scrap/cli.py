@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+from dataclasses import replace
 from datetime import date, datetime, timezone
 from pathlib import Path
 
@@ -10,6 +11,7 @@ from multi_scrap.exporters import export_events_to_csv
 from multi_scrap.pipeline import ScraperPipeline
 from multi_scrap.settings import build_settings
 from multi_scrap.sheets import GoogleSheetsWriter
+from multi_scrap.models import SourceConfig, sheet_header_for_language
 from multi_scrap.source_loader import load_sources_from_csv, load_sources_from_yaml
 from multi_scrap.utils.dates import monday_sunday_bounds
 from multi_scrap.week_filter import filter_events_for_week
@@ -49,7 +51,36 @@ def parse_args() -> argparse.Namespace:
         help="Use current week instead of upcoming week",
     )
     run_cmd.add_argument("--publish-gsheets", action="store_true")
+    run_cmd.add_argument(
+        "--include-disabled",
+        action="store_true",
+        help="Try sources even if disabled in config (automatic recovery pass)",
+    )
+    run_cmd.add_argument(
+        "--force-auto-mode",
+        action="store_true",
+        help="Force all sources to auto mode (requests + Playwright fallback)",
+    )
     return parser.parse_args()
+
+
+def _build_effective_sources(
+    sources: list[SourceConfig],
+    include_disabled: bool,
+    force_auto_mode: bool,
+) -> list[SourceConfig]:
+    effective: list[SourceConfig] = []
+    for source in sources:
+        enabled = source.enabled or include_disabled
+        mode = "auto" if force_auto_mode else source.mode
+        effective.append(
+            replace(
+                source,
+                enabled=enabled,
+                mode=mode,
+            )
+        )
+    return effective
 
 
 def run_weekly(args: argparse.Namespace) -> None:
@@ -60,9 +91,16 @@ def run_weekly(args: argparse.Namespace) -> None:
     else:
         sources = load_sources_from_csv(args.sources_csv)
 
+    effective_sources = _build_effective_sources(
+        sources=sources,
+        include_disabled=args.include_disabled,
+        force_auto_mode=args.force_auto_mode,
+    )
+
     pipeline = ScraperPipeline(settings=settings)
-    result = pipeline.run(sources)
+    result = pipeline.run(effective_sources)
     deduped = deduplicate_events(result.events)
+    sheet_header = sheet_header_for_language(settings.sheet_header_language)
 
     week_start = _parse_week_start(args.week_start)
     if week_start is None:
@@ -75,12 +113,26 @@ def run_weekly(args: argparse.Namespace) -> None:
 
     all_events_path = settings.output_dir / "all_events_deduped.csv"
     weekly_path = settings.output_dir / f"weekly_events_{week_start.isoformat()}_{week_end.isoformat()}.csv"
-    export_events_to_csv(all_events_path, deduped)
-    export_events_to_csv(weekly_path, weekly_events)
+    export_events_to_csv(all_events_path, deduped, header=sheet_header)
+    export_events_to_csv(weekly_path, weekly_events, header=sheet_header)
+
+    total_configured = len(sources)
+    total_eligible = sum(1 for source in effective_sources if source.enabled)
+    total_skipped = total_configured - total_eligible
+    succeeded_sources = sum(1 for row in result.source_summaries if row.extracted_events > 0)
+    failed_sources = max(total_eligible - succeeded_sources, 0)
+    publish_tab = _week_tab_name(settings.google_sheet_prefix, week_start, week_end)
+    rows_written_to_sheet = 0
 
     summary_path = settings.output_dir / f"run_summary_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.txt"
     summary_lines = [
-        f"Total sources configured: {len(sources)}",
+        f"Total sources configured: {total_configured}",
+        f"Total sources eligible this run: {total_eligible}",
+        f"Sources skipped: {total_skipped}",
+        f"Sources succeeded: {succeeded_sources}",
+        f"Sources failed: {failed_sources}",
+        f"Automatic override include-disabled: {args.include_disabled}",
+        f"Automatic override force-auto-mode: {args.force_auto_mode}",
         f"Total source runs: {len(result.source_summaries)}",
         f"Total events extracted (pre-dedup): {len(result.events)}",
         f"Total events after dedup: {len(deduped)}",
@@ -88,6 +140,8 @@ def run_weekly(args: argparse.Namespace) -> None:
         f"Weekly events count: {len(weekly_events)}",
         f"CSV (all deduped): {all_events_path}",
         f"CSV (weekly): {weekly_path}",
+        f"Google sheet tab: {publish_tab}",
+        "Rows written to Google Sheets: 0",
         "",
         "Per-source summary:",
     ]
@@ -109,20 +163,36 @@ def run_weekly(args: argparse.Namespace) -> None:
             raise RuntimeError(
                 "GOOGLE_SERVICE_ACCOUNT_FILE and GOOGLE_SPREADSHEET_ID are required for --publish-gsheets"
             )
-        title = _week_tab_name(settings.google_sheet_prefix, week_start, week_end)
         writer = GoogleSheetsWriter(
             service_account_file=settings.google_service_account_file,
             spreadsheet_id=settings.google_spreadsheet_id,
             price_currency_label=settings.google_price_currency_label,
+            header=sheet_header,
         )
-        rows_written = writer.write_events(title, weekly_events)
+        rows_written_to_sheet = writer.write_events(publish_tab, weekly_events)
         logger.info(
             "Weekly publish summary | sheet_id=%s | tab=%s | rows_written=%s",
             settings.google_spreadsheet_id,
-            title,
-            rows_written,
+            publish_tab,
+            rows_written_to_sheet,
         )
-        print(f"Google Sheet updated: {title}")
+        summary_lines = [
+            line if not line.startswith("Rows written to Google Sheets:") else f"Rows written to Google Sheets: {rows_written_to_sheet}"
+            for line in summary_lines
+        ]
+        summary_path.write_text("\n".join(summary_lines), encoding="utf-8")
+        print(f"Google Sheet updated: {publish_tab}")
+
+    logger.info(
+        "Run summary | eligible=%s | succeeded=%s | failed=%s | skipped=%s | weekly_rows=%s | sheet_tab=%s | sheet_rows=%s",
+        total_eligible,
+        succeeded_sources,
+        failed_sources,
+        total_skipped,
+        len(weekly_events),
+        publish_tab,
+        rows_written_to_sheet,
+    )
 
 
 def run_analysis(args: argparse.Namespace) -> None:

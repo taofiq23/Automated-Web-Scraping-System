@@ -23,8 +23,9 @@ sources:
   instagram_handle: '@bebopclub'
   enabled: true
   mode: static
-  list_url: ''
-  include_link_patterns: []
+  list_url: https://www.passline.com/sitio/bebop-club
+  include_link_patterns:
+  - passline\.com/eventos-ficha-dvm
   exclude_link_patterns:
   - instagram\.com
   - facebook\.com
@@ -41,8 +42,10 @@ sources:
   instagram_handle: '@theloniousbuenosaires'
   enabled: true
   mode: static
-  list_url: ''
-  include_link_patterns: []
+  list_url: https://entradasonline.com.ar/
+  include_link_patterns:
+  - entradasonline\.com\.ar/show/
+  - /show/
   exclude_link_patterns:
   - instagram\.com
   - facebook\.com
@@ -57,9 +60,9 @@ sources:
   venue_name: Virasoro Bar
   source_url: https://www.virasorobar.com.ar/
   instagram_handle: '@virasoro_bar'
-  enabled: true
+  enabled: false
   mode: static
-  list_url: ''
+  list_url: https://www.virasorobar.com.ar/eventos.php
   include_link_patterns: []
   exclude_link_patterns:
   - instagram\.com
@@ -76,7 +79,7 @@ sources:
   source_url: https://jazzvoyeur.com.ar/
   instagram_handle: '@jazzvoyeurba'
   enabled: true
-  mode: static
+  mode: playwright
   list_url: ''
   include_link_patterns: []
   exclude_link_patterns:
@@ -113,8 +116,9 @@ sources:
   instagram_handle: '@ccnuevauriarte'
   enabled: true
   mode: static
-  list_url: ''
-  include_link_patterns: []
+  list_url: https://ccnuevauriarte.com.ar/programacion/
+  include_link_patterns:
+  - /events/
   exclude_link_patterns:
   - instagram\.com
   - facebook\.com
@@ -129,7 +133,7 @@ sources:
   venue_name: Bar de Fondo Cultural
   source_url: https://galeriabardefondo.com.ar/
   instagram_handle: '@bardefondocultural'
-  enabled: true
+  enabled: false
   mode: static
   list_url: ''
   include_link_patterns: []
@@ -141,14 +145,14 @@ sources:
   metadata:
     platform: wordpress
     feasibility: medium
-    analysis_note: ''
+    analysis_note: manual_skip_non_event_content
     duplicate_of_source_id: ''
 - source_id: C0009
   venue_name: Nempla
   source_url: https://lanempla.com/
   instagram_handle: '@nempla'
   enabled: true
-  mode: static
+  mode: playwright
   list_url: ''
   include_link_patterns: []
   exclude_link_patterns:
@@ -180,13 +184,15 @@ sources:
     analysis_note: ''
     duplicate_of_source_id: ''
 - source_id: C0011
-  venue_name: Café Berlín Buenos Aires
+  venue_name: CafÃ© BerlÃ­n Buenos Aires
   source_url: https://www.cafeberlinbuenosaires.com.ar/
   instagram_handle: '@cafeberlinbuenosaires'
   enabled: true
   mode: static
-  list_url: ''
-  include_link_patterns: []
+  list_url: https://www.livepass.com.ar/c/cafe-berlin
+  include_link_patterns:
+  - livepass\.com\.ar/events/.+cafe-berlin
+  - /events/.+cafe-berlin
   exclude_link_patterns:
   - instagram\.com
   - facebook\.com
@@ -202,9 +208,11 @@ sources:
   source_url: https://www.borges1975.com/
   instagram_handle: '@borges1975.espacio.cultural'
   enabled: true
-  mode: playwright
-  list_url: ''
-  include_link_patterns: []
+  mode: static
+  list_url: https://sibilanet.com/librerias/borges1975/show.php
+  include_link_patterns:
+  - product\.php\?id=
+  - show\.php
   exclude_link_patterns:
   - instagram\.com
   - facebook\.com
@@ -216,7 +224,7 @@ sources:
     analysis_note: ''
     duplicate_of_source_id: ''
 - source_id: C0014
-  venue_name: La Biblioteca Café
+  venue_name: La Biblioteca CafÃ©
   source_url: https://labibliotecacafe.com.ar/
   instagram_handle: '@bibliotecacafemusica'
   enabled: true
@@ -234,7 +242,7 @@ sources:
     analysis_note: ''
     duplicate_of_source_id: ''
 - source_id: C0019
-  venue_name: Centro Cultural Cuerda Mecánica
+  venue_name: Centro Cultural Cuerda MecÃ¡nica
   source_url: https://cuerdamecanica.com/
   instagram_handle: '@cuerdamecanica'
   enabled: true
@@ -252,12 +260,12 @@ sources:
     analysis_note: ''
     duplicate_of_source_id: ''
 - source_id: C0020
-  venue_name: Cultural Morán
+  venue_name: Cultural MorÃ¡n
   source_url: https://www.culturalmoran.com/
   instagram_handle: '@culturalmoran'
-  enabled: true
+  enabled: false
   mode: static
-  list_url: ''
+  list_url: https://www.passline.com/sitio/cultural-moran
   include_link_patterns: []
   exclude_link_patterns:
   - instagram\.com
@@ -309,9 +317,9 @@ sources:
   venue_name: Bargoglio
   source_url: https://bargoglio.com.ar/
   instagram_handle: '@bargoglio'
-  enabled: false
-  mode: auto
-  list_url: ''
+  enabled: true
+  mode: static
+  list_url: https://bargoglio.com.ar/#seccion-agenda
   include_link_patterns: []
   exclude_link_patterns:
   - instagram\.com
@@ -324,13 +332,20 @@ sources:
     analysis_note: ''
     duplicate_of_source_id: ''
 - source_id: C0028
-  venue_name: Sótano (C Art Media)
+  venue_name: SÃ³tano (C Art Media)
   source_url: https://www.ccomplejoartmedia.com.ar/
   instagram_handle: '@elsotanodec'
-  enabled: true
-  mode: playwright
-  list_url: ''
-  include_link_patterns: []
+  enabled: false
+  mode: static
+  list_url: https://www.ccomplejoartmedia.com.ar/events
+  include_link_patterns:
+  - /events
+  - agenda
+  - passline\.com
+  - livepass\.com
+  - eventos-ficha-dvm
+  - entradas?
+  - tickets?
   exclude_link_patterns:
   - instagram\.com
   - facebook\.com
@@ -378,7 +393,7 @@ sources:
     analysis_note: ''
     duplicate_of_source_id: ''
 - source_id: C0036
-  venue_name: Café Vinilo
+  venue_name: CafÃ© Vinilo
   source_url: https://cafevinilo.com.ar/
   instagram_handle: '@cafeviniloba'
   enabled: true
@@ -414,7 +429,7 @@ sources:
     analysis_note: ''
     duplicate_of_source_id: ''
 - source_id: C0038
-  venue_name: CAFF (Club Atlético Fernández Fierro)
+  venue_name: CAFF (Club AtlÃ©tico FernÃ¡ndez Fierro)
   source_url: https://caff.ar/
   instagram_handle: '@caff.ar'
   enabled: true
@@ -435,7 +450,7 @@ sources:
   venue_name: Bar Conde
   source_url: https://festivalesba.org/bar/bar-conde/
   instagram_handle: ''
-  enabled: true
+  enabled: false
   mode: static
   list_url: ''
   include_link_patterns: []
@@ -453,7 +468,7 @@ sources:
   venue_name: Hot Club de Boedo (proyecto)
   source_url: https://hotclubdeboedo.blogspot.com/
   instagram_handle: ''
-  enabled: true
+  enabled: false
   mode: static
   list_url: ''
   include_link_patterns: []
@@ -471,10 +486,13 @@ sources:
   venue_name: La Carbonera San Telmo
   source_url: https://lacarbonerasantelmo.com/
   instagram_handle: '@lacarbonera.santelmo'
-  enabled: true
+  enabled: false
   mode: static
-  list_url: ''
-  include_link_patterns: []
+  list_url: https://www.passline.com/sitio/lacarbonera
+  include_link_patterns:
+  - passline\.com
+  - sitio-evento
+  - eventos-ficha-dvm
   exclude_link_patterns:
   - instagram\.com
   - facebook\.com
@@ -540,10 +558,10 @@ sources:
     analysis_note: ''
     duplicate_of_source_id: ''
 - source_id: C0055
-  venue_name: Espacio Cultural Adán Buenosayres
+  venue_name: Espacio Cultural AdÃ¡n Buenosayres
   source_url: https://buenosaires.gob.ar/cultura/promocion-cultural/programacion-adan-buenosayres
   instagram_handle: '@ecadanbuenosayres'
-  enabled: true
+  enabled: false
   mode: static
   list_url: ''
   include_link_patterns: []
@@ -555,7 +573,7 @@ sources:
   metadata:
     platform: government_portal
     feasibility: medium
-    analysis_note: third_party_platform
+    analysis_note: ''
     duplicate_of_source_id: ''
 - source_id: C0056
   venue_name: El Fino Jazz Club
@@ -563,7 +581,7 @@ sources:
   instagram_handle: '@elfinojazzclub'
   enabled: true
   mode: static
-  list_url: ''
+  list_url: https://www.alternativateatral.com/espacio570-el-fino-espacio-escenico/eventos.asp
   include_link_patterns: []
   exclude_link_patterns:
   - instagram\.com

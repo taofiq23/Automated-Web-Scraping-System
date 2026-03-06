@@ -69,14 +69,36 @@ class RawEvent:
         ]
 
 
-SHEET_HEADER = [
+SHEET_HEADER_ES = [
+    "Nombre del evento",
+    "Fecha",
+    "Hora",
+    "Recinto/Bar",
+    "Precio de entrada",
+    "Descripcion",
+    "Musicos",
+    "Enlace del evento",
+    "URL fuente",
+]
+
+SHEET_HEADER_EN = [
     "Event Name",
     "Date",
     "Time",
     "Venue/Bar",
     "Ticket Price",
     "Description",
-    "Performing Musicians",
+    "Musicians",
     "Event Link",
     "Source URL",
 ]
+
+# Backward-compatible default.
+SHEET_HEADER = SHEET_HEADER_ES
+
+
+def sheet_header_for_language(language: str) -> list[str]:
+    normalized = (language or "es").strip().lower()
+    if normalized.startswith("en"):
+        return SHEET_HEADER_EN.copy()
+    return SHEET_HEADER_ES.copy()

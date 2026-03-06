@@ -38,6 +38,29 @@ python -m pip install -e .
 python -m playwright install chromium
 ```
 
+## Docker (production)
+
+Build and run with Docker Compose:
+
+```bash
+docker compose build
+docker compose run --rm scraper
+```
+
+Container behavior:
+- Uses Playwright + Chromium.
+- Mounts output: `./output:/app/output`
+- Mounts service account JSON read-only:
+  - `${SERVICE_ACCOUNT_JSON_PATH}:/run/secrets/google-service-account.json:ro`
+
+Required env vars for compose run:
+- `GOOGLE_SPREADSHEET_ID`
+- `SERVICE_ACCOUNT_JSON_PATH`
+
+Optional:
+- `ENABLE_PLAYWRIGHT` (default `true`)
+- `SHEET_HEADER_LANGUAGE` (`es` default, `en` supported)
+
 ## 1) Analyze all sources
 
 ```powershell
@@ -74,6 +97,13 @@ python -m multi_scrap.cli run-weekly `
   --sources-csv JM_clubes_scrappinglistxlsxclubs.csv `
   --sources-yaml config/sources.yml `
   --current-week
+
+# Automatic recovery pass (try all sources, no manual per-site mode)
+python -m multi_scrap.cli run-weekly `
+  --sources-yaml config/sources.yml `
+  --current-week `
+  --include-disabled `
+  --force-auto-mode
 ```
 
 Specific week start:
@@ -88,6 +118,8 @@ Generated:
 - `output/all_events_deduped.csv`
 - `output/weekly_events_<monday>_<sunday>.csv`
 - `output/run_summary_<timestamp>.txt`
+  - Includes source counts: succeeded/failed/skipped
+  - Includes publish summary: tab name + rows written
 
 ## 3) Publish weekly result to Google Sheets
 
@@ -111,6 +143,10 @@ python -m multi_scrap.cli run-weekly `
 Sheet title format:
 - `Week YYYY-MM-DD to YYYY-MM-DD`
 
+Header behavior:
+- Stable column order is fixed by code.
+- Header language is configurable via `SHEET_HEADER_LANGUAGE` (`es` default).
+
 ## Scheduling requirement (Sunday afternoon/evening GMT+3)
 
 Recommended command for weekly automation:
@@ -121,7 +157,17 @@ python -m multi_scrap.cli run-weekly --sources-yaml config/sources.yml --publish
 
 Schedule details are in `docs/GCP_DEPLOYMENT.md`.
 
-## Selector validation (no guessing)
+## Operations quick reference
+
+- Enable weekly cron: `scripts/enable_weekly_cron.sh`
+- Disable weekly cron: `scripts/disable_weekly_cron.sh`
+- Scheduled log: `/var/log/jazzmap_scraper/weekly.log`
+- Manual docker run:
+  - `cd /home/agenda/Automated-Web-Scraping-System && docker compose run --rm scraper`
+- Update code on VM:
+  - `git pull && docker compose build`
+
+## Selector validation
 
 Use:
 
