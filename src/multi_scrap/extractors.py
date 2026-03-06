@@ -29,6 +29,7 @@ DATE_HINT_RE = re.compile(
 )
 TIME_HINT_RE = re.compile(r"(?i)\b([01]?\d|2[0-3])[:\.][0-5]\d\b")
 URL_DATE_RE = re.compile(r"(\d{2})(\d{2})(\d{4})$")
+DATE_ONLY_TEXT_RE = re.compile(r"^[\d\s:/\-.]+$")
 AGENDA_TEXT_EVENT_RE = re.compile(
     r"(?i)(?:jazz|show|m[uú]sica|evento)?\s*-\s*"
     r"(?:lunes|martes|mi[eé]rcoles|miercoles|jueves|viernes|s[áa]bado|sabado|domingo)\s+"
@@ -298,6 +299,8 @@ def extract_heuristic_card_events(html: str, source: SourceConfig, page_url: str
             "h1, h2, h3, h4, h5, .h4, .title, .event-title, [class*='title'], [class*='name']"
         )
         name = clean_text(title_node.get_text(" ", strip=True) if title_node else "")
+        if _looks_like_date_only(name):
+            continue
         if len(name) < 4 or name.casefold() in GENERIC_CARD_NAMES:
             continue
 
@@ -1579,6 +1582,8 @@ def extract_dated_anchor_events(html: str, source: SourceConfig, page_url: str) 
         time_match = TIME_HINT_RE.search(raw_text)
         time_value = normalize_time(time_match.group(0) if time_match else "")
         event_name = clean_text(raw_text.replace(date_match.group(1), "").strip("() -:"))
+        if _looks_like_date_only(event_name):
+            continue
         if len(event_name) < 4:
             continue
         event_link = urljoin(page_url, anchor.get("href", ""))
@@ -1607,6 +1612,16 @@ def _infer_year_from_text(text: str) -> int:
     if years:
         return max(years)
     return date.today().year
+
+
+def _looks_like_date_only(value: str) -> bool:
+    text = clean_text(value)
+    if not text:
+        return False
+    if not DATE_ONLY_TEXT_RE.match(text):
+        return False
+    date_value, _ = parse_date_time(text)
+    return bool(date_value)
 
 
 def extract_jazzvoyeur_schedule_events(html: str, source: SourceConfig, page_url: str) -> list[RawEvent]:

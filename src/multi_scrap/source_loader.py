@@ -59,17 +59,22 @@ def load_sources_from_yaml(path: str | Path) -> list[SourceConfig]:
     items = payload.get("sources", [])
     sources: list[SourceConfig] = []
     for item in items:
+        source_id = (item.get("source_id") or "").strip()
+        venue_name = _repair_mojibake((item.get("venue_name") or source_id).strip())
+        source_url = (item.get("source_url") or "").strip()
+        instagram_handle = _repair_mojibake((item.get("instagram_handle") or "").strip())
+        list_url = (item.get("list_url") or "").strip()
         sources.append(
             SourceConfig(
-                source_id=item["source_id"],
-                venue_name=item.get("venue_name", item["source_id"]),
-                source_url=item["source_url"],
-                instagram_handle=item.get("instagram_handle", ""),
+                source_id=source_id,
+                venue_name=venue_name or source_id,
+                source_url=source_url,
+                instagram_handle=instagram_handle,
                 enabled=bool(item.get("enabled", True)),
                 mode=item.get("mode", "auto"),
                 include_link_patterns=item.get("include_link_patterns", []) or [],
                 exclude_link_patterns=item.get("exclude_link_patterns", []) or [],
-                list_url=item.get("list_url", ""),
+                list_url=list_url,
                 metadata=item.get("metadata", {}) or {},
             )
         )
