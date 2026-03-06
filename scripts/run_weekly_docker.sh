@@ -9,7 +9,11 @@ log() {
   printf '[%s] %s\n' "$(date '+%Y-%m-%dT%H:%M:%S%z')" "$1" >> "${LOG_FILE}"
 }
 
-mkdir -p "${LOG_DIR}"
+if ! mkdir -p "${LOG_DIR}" 2>/dev/null; then
+  echo "ERROR: cannot create log directory ${LOG_DIR}" >&2
+  echo "Run once: sudo mkdir -p ${LOG_DIR} && sudo chown -R $(id -un):$(id -gn) ${LOG_DIR}" >&2
+  exit 1
+fi
 
 if [ -f "${HOME}/.bashrc" ]; then
   # shellcheck disable=SC1090
@@ -26,6 +30,11 @@ if ! command -v docker >/dev/null 2>&1; then
   exit 1
 fi
 
+if ! command -v docker-compose >/dev/null 2>&1; then
+  log "ERROR: docker-compose command not found in PATH"
+  exit 1
+fi
+
 if ! cd "${REPO_DIR}"; then
   log "ERROR: cannot enter repo directory ${REPO_DIR}"
   exit 1
@@ -33,7 +42,7 @@ fi
 
 log "START: weekly docker publish"
 set +e
-docker compose run --rm scraper 2>&1 | while IFS= read -r line; do log "${line}"; done
+docker-compose run --rm scraper 2>&1 | while IFS= read -r line; do log "${line}"; done
 status=${PIPESTATUS[0]}
 set -e
 log "END: weekly docker publish status=${status}"
