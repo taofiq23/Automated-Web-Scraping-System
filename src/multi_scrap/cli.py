@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import argparse
 import logging
+import warnings
 from dataclasses import replace
 from datetime import date, datetime, timezone
 from pathlib import Path
+
+from bs4 import XMLParsedAsHTMLWarning
 
 from multi_scrap.dedup import deduplicate_events
 from multi_scrap.exporters import export_events_to_csv
@@ -118,19 +121,19 @@ def run_weekly(args: argparse.Namespace) -> None:
 
     total_configured = len(sources)
     total_eligible = sum(1 for source in effective_sources if source.enabled)
-    total_skipped = total_configured - total_eligible
-    succeeded_sources = sum(1 for row in result.source_summaries if row.extracted_events > 0)
-    failed_sources = max(total_eligible - succeeded_sources, 0)
+    total_inactive = total_configured - total_eligible
+    contributing_sources = sum(1 for row in result.source_summaries if row.extracted_events > 0)
+    reviewed_no_additions = max(total_eligible - contributing_sources, 0)
     publish_tab = _week_tab_name(settings.google_sheet_prefix, week_start, week_end)
     rows_written_to_sheet = 0
 
     summary_path = settings.output_dir / f"run_summary_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.txt"
     summary_lines = [
         f"Total sources configured: {total_configured}",
-        f"Total sources eligible this run: {total_eligible}",
-        f"Sources skipped: {total_skipped}",
-        f"Sources succeeded: {succeeded_sources}",
-        f"Sources failed: {failed_sources}",
+        f"Total sources active this run: {total_eligible}",
+        f"Sources inactive by configuration: {total_inactive}",
+        f"Sources contributing events: {contributing_sources}",
+        f"Sources reviewed with no event additions: {reviewed_no_additions}",
         f"Automatic override include-disabled: {args.include_disabled}",
         f"Automatic override force-auto-mode: {args.force_auto_mode}",
         f"Total source runs: {len(result.source_summaries)}",
@@ -184,11 +187,11 @@ def run_weekly(args: argparse.Namespace) -> None:
         print(f"Google Sheet updated: {publish_tab}")
 
     logger.info(
-        "Run summary | eligible=%s | succeeded=%s | failed=%s | skipped=%s | weekly_rows=%s | sheet_tab=%s | sheet_rows=%s",
+        "Run overview | active_sources=%s/%s | contributing_sources=%s | reviewed_no_additions=%s | weekly_rows=%s | sheet_tab=%s | sheet_rows=%s",
         total_eligible,
-        succeeded_sources,
-        failed_sources,
-        total_skipped,
+        total_configured,
+        contributing_sources,
+        reviewed_no_additions,
         len(weekly_events),
         publish_tab,
         rows_written_to_sheet,
@@ -217,6 +220,7 @@ def run_analysis(args: argparse.Namespace) -> None:
 
 
 def main() -> None:
+    warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
