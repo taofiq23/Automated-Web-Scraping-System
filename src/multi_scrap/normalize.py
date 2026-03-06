@@ -1,8 +1,14 @@
 from __future__ import annotations
 
 from multi_scrap.models import RawEvent, SourceConfig
-from multi_scrap.utils.dates import normalize_date, normalize_time
-from multi_scrap.utils.text import clean_text, normalize_musicians, sanitize_description
+from multi_scrap.utils.dates import normalize_date, normalize_time, parse_date_time
+from multi_scrap.utils.text import (
+    clean_text,
+    extract_price,
+    infer_musicians_from_text,
+    normalize_musicians,
+    sanitize_description,
+)
 
 
 def normalize_event(event: RawEvent, source: SourceConfig) -> RawEvent:
@@ -13,6 +19,14 @@ def normalize_event(event: RawEvent, source: SourceConfig) -> RawEvent:
     event.ticket_price = clean_text(event.ticket_price)
     event.description = sanitize_description(event.description)
     event.musicians = normalize_musicians(event.musicians)
+    if not event.ticket_price:
+        event.ticket_price = extract_price(" ".join([event.description, event.event_name]))
+    if not event.time and event.description:
+        _, inferred_time = parse_date_time(event.description)
+        if inferred_time:
+            event.time = inferred_time
+    if not event.musicians:
+        event.musicians = infer_musicians_from_text(" ".join([event.description, event.event_name]))
     event.event_link = clean_text(event.event_link)
     event.source_url = clean_text(event.source_url) or source.source_url
     event.source_id = source.source_id

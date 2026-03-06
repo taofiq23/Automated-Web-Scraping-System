@@ -51,7 +51,15 @@ POMPAS_CONTEXT_RE = re.compile(
     r"(.+?)(?:Ver detalle|Semanalmente|$)"
 )
 
-GENERIC_EVENT_NAMES = {"principal", "home", "inicio", "events", "eventos"}
+GENERIC_EVENT_NAMES = {
+    "principal",
+    "home",
+    "inicio",
+    "events",
+    "eventos",
+    "próximos conciertos",
+    "proximos conciertos",
+}
 GENERIC_CARD_NAMES = {"comprar", "buy", "tickets", "entradas", "reservar", "ver detalle", "shows"}
 GENERIC_MUSICIAN_VALUES = {"organization", "person", "musicgroup", "performinggroup"}
 TRAILING_DATE_IN_TITLE_RE = re.compile(r"\s+\d{1,2}/\d{1,2}/\d{4}\s*$")
@@ -80,8 +88,49 @@ PASSLINE_SKIP_LINES = {
     "image",
 }
 MUSICIAN_DASH_RE = re.compile(
-    r"([A-Z\u00C0-\u00FF][A-Za-z\u00C0-\u00FF'\.-]+(?:\s+[A-Z\u00C0-\u00FF][A-Za-z\u00C0-\u00FF'\.-]+)+)\s*[--\u2014]\s*"
+    r"([A-Z\u00C0-\u00FF][A-Za-z\u00C0-\u00FF'\-]+(?:\s+[A-Z\u00C0-\u00FF][A-Za-z\u00C0-\u00FF'\-]+)+)\s*(?:-|\u2014)\s*"
 )
+MUSICIAN_NAME_RE = re.compile(
+    r"\b([A-Z\u00C0-\u00FF][A-Za-z\u00C0-\u00FF'\-]+(?:\s+[A-Z\u00C0-\u00FF][A-Za-z\u00C0-\u00FF'\-]+){1,2})\b"
+)
+MUSICIAN_NAME_STOPWORDS = {
+    "jazz",
+    "club",
+    "band",
+    "trio",
+    "cuarteto",
+    "quartet",
+    "quinteto",
+    "quintet",
+    "sexteto",
+    "sextet",
+    "orquesta",
+    "orchestra",
+    "presenta",
+    "present",
+    "rootsxfuture",
+    "vol",
+    "noche",
+    "show",
+    "cafe",
+    "café",
+    "free",
+    "entry",
+    "en",
+    "la",
+    "january",
+    "february",
+    "march",
+    "april",
+    "may",
+    "june",
+    "july",
+    "august",
+    "september",
+    "october",
+    "november",
+    "december",
+}
 CCNU_CLASS_DATE_RE = re.compile(r"\b(\d{2})-(\d{2})-(\d{4})\b")
 CCNU_SUBTITLE_RE = re.compile(
     r"(?i)(?:lunes|martes|mi[eÃ©]rcoles|miercoles|jueves|viernes|s[Ã¡a]bado|sabado|domingo)\s+"
@@ -96,7 +145,7 @@ VIRASORO_FECHA_RE = re.compile(
     r"(\d{1,2})\s+([A-Za-z\u00C0-\u00FF\u00D1\u00F1]+)\s+(\d{4})\s+(\d{1,2})\s+(\d{2})\s+hs\.?"
 )
 MUSICIAN_PAREN_RE = re.compile(
-    r"([A-Z\u00C0-\u00FF][A-Za-z\u00C0-\u00FF'\.-]+(?:\s+[A-Z\u00C0-\u00FF][A-Za-z\u00C0-\u00FF'\.-]+)+)\s*\([^)]+\)"
+    r"([A-Z\u00C0-\u00FF][A-Za-z\u00C0-\u00FF'\-]+(?:\s+[A-Z\u00C0-\u00FF][A-Za-z\u00C0-\u00FF'\-]+)+)\s*\([^)]+\)"
 )
 CCOM_TIME_RE = re.compile(r"(?i)\b(\d{1,2})(?::(\d{2}))?\s*hs\b")
 PDF_DATE_RE = re.compile(
@@ -151,9 +200,19 @@ def _venue_matches_source(extracted_venue: str, source_venue: str) -> bool:
 
 
 def _extract_musicians_from_text(text: str) -> str:
+    cleaned_text = clean_text(text)
+    if not cleaned_text:
+        return ""
+
     names: list[str] = []
     for pattern in (MUSICIAN_DASH_RE, MUSICIAN_PAREN_RE):
-        names.extend(match.group(1) for match in pattern.finditer(text))
+        names.extend(match.group(1) for match in pattern.finditer(cleaned_text))
+    for match in MUSICIAN_NAME_RE.finditer(cleaned_text):
+        candidate = clean_text(match.group(1))
+        lowered_tokens = {token.casefold() for token in candidate.split()}
+        if lowered_tokens & MUSICIAN_NAME_STOPWORDS:
+            continue
+        names.append(candidate)
     return normalize_musicians(", ".join(names))
 
 
@@ -186,6 +245,10 @@ def _build_event_from_schema(item: dict[str, Any], source: SourceConfig, page_ur
         if value and value.casefold() not in GENERIC_MUSICIAN_VALUES
     ]
     musicians = normalize_musicians(", ".join(filtered_musicians))
+    if not musicians:
+        musicians = _extract_musicians_from_text(
+            " ".join([name, clean_text(item.get("description"))])
+        )
 
     url_value = clean_text(item.get("url")) or page_url
     return RawEvent(
@@ -270,7 +333,7 @@ def extract_heuristic_card_events(html: str, source: SourceConfig, page_url: str
             venue=source.venue_name,
             ticket_price=price,
             description=full_text[:450],
-            musicians="",
+            musicians=_extract_musicians_from_text(f"{name}. {full_text}"),
             event_link=event_link,
             source_url=source.source_url,
             source_id=source.source_id,
@@ -309,15 +372,23 @@ def extract_events_from_html(html: str, source: SourceConfig, page_url: str) -> 
         if nempla_events:
             return nempla_events
 
+    if "prez.ar" in host:
+        prez_events = extract_prez_events(html, source, page_url)
+        if prez_events:
+            return prez_events
+
     if "ccnuevauriarte.com.ar" in host:
         ccnu_events = extract_ccnu_events(html, source, page_url)
         if ccnu_events:
             return ccnu_events
 
     if "borges1975.com" in host or "sibilanet.com" in host:
-        borges_events = extract_borges_shows_events(html, source, page_url)
-        if borges_events:
-            return borges_events
+        return extract_borges_shows_events(html, source, page_url)
+
+    if "thelift1967.com.ar" in host and "/event-details/" in page_url:
+        thelift_events = extract_thelift_detail_events(html, source, page_url)
+        if thelift_events:
+            return thelift_events
 
     if "cafeberlinbuenosaires.com.ar" in host or ("livepass.com.ar" in host and source.source_id == "C0011"):
         cafeberlin_events = extract_cafeberlin_home_events(html, source, page_url)
@@ -343,6 +414,16 @@ def extract_events_from_html(html: str, source: SourceConfig, page_url: str) -> 
         passline_events = extract_passline_list_events(html, source, page_url)
         if passline_events:
             return passline_events
+
+    if "livepass.com.ar" in host:
+        livepass_events = extract_livepass_detail_events(html, source, page_url)
+        if livepass_events:
+            return livepass_events
+
+    if "tuentrada.com" in host:
+        tuentrada_events = extract_tuentrada_detail_events(html, source, page_url)
+        if tuentrada_events:
+            return tuentrada_events
 
     if "entradasonline.com.ar" in host:
         entradasonline_events = extract_entradasonline_events(html, source, page_url)
@@ -379,6 +460,9 @@ def extract_cafeberlin_home_events(html: str, source: SourceConfig, page_url: st
         event_name = clean_text(title_node.get_text(" ", strip=True) if title_node else "")
         if len(event_name) < 4 or event_name.casefold() in GENERIC_CARD_NAMES:
             continue
+        if "..." in event_name or "…" in event_name:
+            # Skip truncated listing titles; detail pages carry complete names and richer pricing data.
+            continue
 
         date_value, time_value = parse_date_time(f"{raw_date} {page_year}")
         if not date_value:
@@ -387,6 +471,17 @@ def extract_cafeberlin_home_events(html: str, source: SourceConfig, page_url: st
             continue
         if not TIME_HINT_RE.search(raw_date):
             time_value = ""
+
+        price_value = ""
+        context = date_node
+        for _ in range(6):
+            if not context:
+                break
+            context_text = clean_text(context.get_text(" ", strip=True))
+            price_value = extract_price(context_text)
+            if price_value:
+                break
+            context = context.parent
 
         link_node = date_node.find_parent("a", href=True)
         if not link_node and date_node.parent:
@@ -400,7 +495,7 @@ def extract_cafeberlin_home_events(html: str, source: SourceConfig, page_url: st
             date=date_value,
             time=time_value,
             venue=source.venue_name,
-            ticket_price="",
+            ticket_price=price_value,
             description=raw_date,
             musicians="",
             event_link=event_link,
@@ -744,7 +839,7 @@ def extract_ccnu_events(html: str, source: SourceConfig, page_url: str) -> list[
         venue=venue_value,
         ticket_price=price_value,
         description=description_value,
-        musicians="",
+        musicians=_extract_musicians_from_text(f"{event_name}. {description_value}"),
         event_link=page_url,
         source_url=source.source_url,
         source_id=source.source_id,
@@ -801,6 +896,10 @@ def extract_borges_shows_events(html: str, source: SourceConfig, page_url: str) 
 
         if not title_value or not date_value:
             continue
+        if "borges 1975" in title_value.casefold():
+            continue
+        if not price_value:
+            price_value = extract_price(container_text)
 
         description_node = container.select_one("p[align='justify'], p")
         description = clean_text(description_node.get_text(" ", strip=True) if description_node else "")
@@ -842,7 +941,8 @@ def extract_borges_shows_events(html: str, source: SourceConfig, page_url: str) 
     )
     for name, date_part, time_part, price in fallback_re.findall(text):
         event_name = clean_text(name)
-        if event_name.casefold() in BORGES_SKIP_TITLES:
+        lowered_name = event_name.casefold()
+        if lowered_name in BORGES_SKIP_TITLES or lowered_name.startswith("borges 1975"):
             continue
         date_value = normalize_date(date_part)
         time_value = normalize_time(time_part.replace(" ", ":"))
@@ -952,6 +1052,265 @@ def extract_entradasonline_events(html: str, source: SourceConfig, page_url: str
     return events
 
 
+def extract_thelift_detail_events(html: str, source: SourceConfig, page_url: str) -> list[RawEvent]:
+    soup = BeautifulSoup(html, "html.parser")
+    title_node = soup.select_one("[itemprop='name'], h1, h2")
+    event_name = clean_text(title_node.get_text(" ", strip=True) if title_node else "")
+    if len(event_name) < 3 or event_name.casefold() in GENERIC_EVENT_NAMES:
+        return []
+
+    page_text = clean_text(soup.get_text(" ", strip=True))
+    date_value, time_value = parse_date_time(page_text)
+    if not date_value:
+        iso_match = re.search(r"\b(20\d{2}-\d{2}-\d{2})(?:[T\s](\d{2}:\d{2}))?", html)
+        if iso_match:
+            date_value = iso_match.group(1)
+            time_value = normalize_time(iso_match.group(2) or "")
+    if not date_value:
+        return []
+
+    desc_node = (
+        soup.select_one("meta[property='og:description']")
+        or soup.select_one("meta[name='description']")
+        or soup.select_one(".event-description, [class*='description'], p")
+    )
+    if desc_node and desc_node.has_attr("content"):
+        description = clean_text(desc_node.get("content", ""))
+    else:
+        description = clean_text(desc_node.get_text(" ", strip=True) if desc_node else "")
+    if not description:
+        description = page_text[:320] or event_name
+
+    event = RawEvent(
+        event_name=event_name,
+        date=date_value,
+        time=time_value,
+        venue=source.venue_name,
+        ticket_price=extract_price(page_text),
+        description=description[:450],
+        musicians=_extract_musicians_from_text(f"{event_name}. {description}"),
+        event_link=page_url,
+        source_url=source.source_url,
+        source_id=source.source_id,
+    )
+    return [event]
+
+
+def extract_prez_events(html: str, source: SourceConfig, page_url: str) -> list[RawEvent]:
+    soup = BeautifulSoup(html, "html.parser")
+    cards = soup.select("div.ectbe-list-posts")
+    if not cards:
+        return []
+
+    candidates: list[RawEvent] = []
+    time_candidates: list[str] = []
+
+    for card in cards:
+        title_node = card.select_one(".ectbe-events-title")
+        event_name = clean_text(title_node.get_text(" ", strip=True) if title_node else "")
+        if len(event_name) < 3 or event_name.casefold() in GENERIC_EVENT_NAMES:
+            continue
+
+        date_value = ""
+        time_value = ""
+        start_node = card.select_one("[itemprop='startDate']")
+        if start_node:
+            start_raw = clean_text(start_node.get("content", ""))
+            date_match = re.search(r"\d{4}-\d{2}-\d{2}", start_raw)
+            if date_match:
+                date_value = date_match.group(0)
+            time_match = re.search(r"(\d{2}:\d{2})", start_raw)
+            if time_match:
+                time_value = normalize_time(time_match.group(1))
+
+        if not date_value:
+            date_text = clean_text((card.select_one(".ectbe-event-datetimes") or card).get_text(" ", strip=True))
+            date_value, time_guess = parse_date_time(date_text)
+            if not time_value:
+                time_value = time_guess
+        if not date_value:
+            continue
+
+        desc_node = card.select_one(".ect-event-content")
+        description = clean_text(desc_node.get_text(" ", strip=True) if desc_node else "")
+        musicians = _extract_musicians_from_text(f"{event_name}. {description}")
+
+        link_node = card.select_one("a[href*='tuentrada.com/tuentrada/select']")
+        event_link = urljoin(page_url, link_node.get("href", "").strip()) if link_node else page_url
+
+        candidates.append(
+            RawEvent(
+                event_name=event_name,
+                date=date_value,
+                time=time_value,
+                venue=source.venue_name,
+                ticket_price=extract_price(clean_text(card.get_text(" ", strip=True))),
+                description=description,
+                musicians=musicians,
+                event_link=event_link,
+                source_url=source.source_url,
+                source_id=source.source_id,
+            )
+        )
+        if time_value:
+            time_candidates.append(time_value)
+
+    # Event Calendar plugin exposes "11:00" placeholder; keep time blank in that case.
+    if time_candidates and len(set(time_candidates)) == 1 and time_candidates[0] in {"11:00", "00:00"}:
+        for event in candidates:
+            event.time = ""
+
+    seen: set[tuple[str, str, str]] = set()
+    events: list[RawEvent] = []
+    for event in candidates:
+        key = (event.event_name.casefold(), event.date, event.event_link)
+        if key in seen:
+            continue
+        seen.add(key)
+        events.append(event)
+    return events
+
+
+def extract_livepass_detail_events(html: str, source: SourceConfig, page_url: str) -> list[RawEvent]:
+    soup = BeautifulSoup(html, "html.parser")
+    title_node = (
+        soup.select_one(".title-event")
+        or soup.select_one("[itemprop='name']")
+        or soup.select_one("h1")
+        or soup.select_one("h2.mb-lg-3")
+        or soup.select_one("h2")
+    )
+    event_name = clean_text(title_node.get_text(" ", strip=True) if title_node else "")
+    if len(event_name) < 3 or event_name.casefold() in GENERIC_EVENT_NAMES:
+        return []
+
+    date_value = ""
+    time_value = ""
+    start_node = soup.select_one("[itemprop='startDate']")
+    if start_node:
+        raw_start = clean_text(start_node.get("content", "") or start_node.get_text(" ", strip=True))
+        date_value, time_value = parse_date_time(raw_start)
+
+    if not date_value:
+        subtitle_node = soup.select_one(".subtitle-event, .pb-1, .date-home, [class*='date']")
+        subtitle_text = clean_text(subtitle_node.get_text(" ", strip=True) if subtitle_node else "")
+        date_value, time_value = parse_date_time(subtitle_text)
+        if not date_value:
+            subtitle_match = re.search(
+                r"(?i)(\d{1,2})\s+([A-Za-z\u00C0-\u00FF\u00D1\u00F1]+)(?:,?\s+(\d{4}))?.*?(\d{1,2}:\d{2})",
+                subtitle_text,
+            )
+            if subtitle_match:
+                day, month, year, hour = subtitle_match.groups()
+                parsed_year = year or str(_infer_year_from_text(clean_text(soup.get_text(" ", strip=True))))
+                date_value, _ = parse_date_time(f"{day} {month} {parsed_year}")
+                time_value = normalize_time(hour)
+
+    page_text = clean_text(soup.get_text(" ", strip=True))
+    if not date_value:
+        date_match = re.search(
+            r"(?i)(?:lunes|martes|mi[e\u00E9]rcoles|miercoles|jueves|viernes|s[\u00E1a]bado|sabado|domingo)\s+"
+            r"\d{1,2}\s+de\s+[A-Za-z\u00C0-\u00FF\u00D1\u00F1]+\s+\d{4}(?:\s*[-,]?\s*\d{1,2}:\d{2})?",
+            page_text,
+        )
+        if date_match:
+            date_value, time_value = parse_date_time(date_match.group(0))
+
+    if not date_value:
+        return []
+
+    venue_value = source.venue_name
+    recinto_match = re.search(r"(?i)recinto:\s*([^|]+?)(?=\s{2,}|$)", page_text)
+    if recinto_match:
+        venue_value = clean_text(recinto_match.group(1))
+    else:
+        venue_node = soup.select_one("[itemprop='location'], .venue, [class*='venue']")
+        venue_value = clean_text(venue_node.get_text(" ", strip=True) if venue_node else "") or source.venue_name
+
+    price_value = ""
+    price_node = soup.select_one("[itemprop='price'], .price, .event-price, [class*='price']")
+    if price_node:
+        price_value = extract_price(clean_text(price_node.get_text(" ", strip=True)))
+    if not price_value:
+        price_value = extract_price(page_text)
+
+    description_node = soup.select_one(
+        ".description-event, .event-description, .show-description, [class*='description']"
+    )
+    description = clean_text(description_node.get_text(" ", strip=True) if description_node else "")
+    if not description:
+        description = page_text[:450]
+
+        musicians = _extract_musicians_from_text(f"{event_name}. {description}")
+
+    event = RawEvent(
+        event_name=event_name,
+        date=date_value,
+        time=time_value,
+        venue=venue_value,
+        ticket_price=price_value,
+        description=description,
+        musicians=musicians,
+        event_link=page_url,
+        source_url=source.source_url,
+        source_id=source.source_id,
+    )
+    return [event]
+
+
+def extract_tuentrada_detail_events(html: str, source: SourceConfig, page_url: str) -> list[RawEvent]:
+    soup = BeautifulSoup(html, "html.parser")
+    title_node = soup.select_one("h1, h2, [itemprop='name']")
+    event_name = clean_text(title_node.get_text(" ", strip=True) if title_node else "")
+    if not event_name:
+        meta_title = soup.select_one("meta[property='og:title']")
+        event_name = clean_text(meta_title.get("content", "") if meta_title else "")
+    if len(event_name) < 3 or event_name.casefold() in GENERIC_EVENT_NAMES:
+        return []
+
+    page_text = clean_text(soup.get_text(" ", strip=True))
+    date_value = ""
+    time_value = ""
+
+    date_patterns = [
+        r"(?i)(?:lunes|martes|mi[e\u00E9]rcoles|miercoles|jueves|viernes|s[\u00E1a]bado|sabado|domingo)\s+"
+        r"\d{1,2}\s+de\s+[A-Za-z\u00C0-\u00FF\u00D1\u00F1]+\s+\d{4}(?:\s*[-,]?\s*\d{1,2}:\d{2})?",
+        r"(?i)\d{1,2}\s+de\s+[A-Za-z\u00C0-\u00FF\u00D1\u00F1]+\s+\d{4}(?:\s*(?:a\s+las)?\s*\d{1,2}:\d{2})?",
+    ]
+    for pattern in date_patterns:
+        match = re.search(pattern, page_text)
+        if match:
+            date_value, time_value = parse_date_time(match.group(0))
+            if date_value:
+                break
+
+    if not date_value:
+        return []
+
+    price_value = extract_price(page_text)
+
+    desc_node = soup.select_one("meta[name='description']")
+    description = clean_text(desc_node.get("content", "") if desc_node else "")
+    if not description:
+        description = page_text[:450]
+
+    musicians = _extract_musicians_from_text(description)
+
+    event = RawEvent(
+        event_name=event_name,
+        date=date_value,
+        time=time_value,
+        venue=source.venue_name,
+        ticket_price=price_value,
+        description=description,
+        musicians=musicians,
+        event_link=page_url,
+        source_url=source.source_url,
+        source_id=source.source_id,
+    )
+    return [event]
+
+
 def extract_passline_list_events(html: str, source: SourceConfig, page_url: str) -> list[RawEvent]:
     soup = BeautifulSoup(html, "html.parser")
     cards = soup.select(PASSLINE_CARD_SELECTOR)
@@ -975,14 +1334,16 @@ def extract_passline_list_events(html: str, source: SourceConfig, page_url: str)
 
         venue_node = card.select_one(PASSLINE_VENUE_SELECTOR)
         venue_value = clean_text(venue_node.get_text(" ", strip=True) if venue_node else "") or source.venue_name
+        price_value = extract_price(clean_text(card.get_text(" ", strip=True)))
+        musicians = _extract_musicians_from_text(f"{event_name}. {raw_title}")
         event = RawEvent(
             event_name=event_name,
             date=date_value,
             time=time_value,
             venue=venue_value,
-            ticket_price="",
+            ticket_price=price_value,
             description=raw_title,
-            musicians="",
+            musicians=musicians,
             event_link=event_link,
             source_url=source.source_url,
             source_id=source.source_id,
@@ -1042,9 +1403,9 @@ def extract_passline_list_events(html: str, source: SourceConfig, page_url: str)
             date=date_value,
             time=time_value,
             venue=venue_value,
-            ticket_price="",
+            ticket_price=extract_price(" ".join(text_lines[max(idx - 2, 0): min(idx + 3, len(text_lines))])),
             description=f"{event_name} {date_match.group(1)}",
-            musicians="",
+            musicians=_extract_musicians_from_text(event_name),
             event_link=page_url,
             source_url=source.source_url,
             source_id=source.source_id,
@@ -1135,7 +1496,18 @@ def extract_passline_detail_events(html: str, source: SourceConfig, page_url: st
     if not date_value:
         return []
 
-    price = extract_price(page_text)
+    price = ""
+    price_node = soup.select_one(
+        "[itemprop='price'], .price, .event-price, .ticket-price, [class*='price']"
+    )
+    if price_node:
+        price = extract_price(clean_text(price_node.get_text(" ", strip=True)))
+    if not price:
+        script_price_match = re.search(r'(?i)"price"\s*:\s*"?(\d[\d\.,]*)"?', html)
+        if script_price_match:
+            price = clean_text(f"${script_price_match.group(1)}")
+    if not price:
+        price = extract_price(page_text)
     event = RawEvent(
         event_name=event_name,
         date=date_value,
@@ -1143,7 +1515,7 @@ def extract_passline_detail_events(html: str, source: SourceConfig, page_url: st
         venue=source.venue_name,
         ticket_price=price,
         description=page_text[:450],
-        musicians="",
+        musicians=_extract_musicians_from_text(page_text),
         event_link=page_url,
         source_url=source.source_url,
         source_id=source.source_id,
@@ -1239,28 +1611,45 @@ def _infer_year_from_text(text: str) -> int:
 
 def extract_jazzvoyeur_schedule_events(html: str, source: SourceConfig, page_url: str) -> list[RawEvent]:
     text = clean_text(BeautifulSoup(html, "html.parser").get_text(" ", strip=True))
-    if "próximos shows".casefold() not in text.casefold() and "proximos shows" not in text.casefold():
-        return []
-
     year = _infer_year_from_text(text)
     default_time = "21:00" if "show 21:00" in text.casefold() else ""
+    default_price = extract_price(text)
     events: list[RawEvent] = []
     seen: set[tuple[str, str]] = set()
     for _, day, month, raw_name in WEEKDAY_BLOCK_RE.findall(text):
-        event_name = clean_text(raw_name.replace("QUIERO IR", "").strip(" -:"))
-        if len(event_name) < 3 or event_name.casefold() in GENERIC_CARD_NAMES:
+        event_time = default_time
+        ampm_match = re.search(r"(?i)\b([1-9]|1[0-2]):([0-5]\d)\s*(AM|PM)\b", raw_name)
+        if ampm_match:
+            hour, minute, marker = ampm_match.groups()
+            hour_num = int(hour) % 12
+            if marker.upper() == "PM":
+                hour_num += 12
+            event_time = f"{hour_num:02d}:{minute}"
+
+        cleaned_name = re.sub(r"(?i)\b\d{1,2}:\d{2}\s*(AM|PM)\b", " ", raw_name)
+        cleaned_name = re.sub(r"(?i)\bjazz\s+voyeur\s+club.*$", " ", cleaned_name)
+        cleaned_name = re.sub(r"(?i)\bdetalles?\s+del\s+show.*$", " ", cleaned_name)
+        event_name = clean_text(cleaned_name.replace("QUIERO IR", "").strip(" -:"))
+        lowered = event_name.casefold()
+        if re.match(r"^\d{1,2}[:\.]\d{2}\s*(am|pm)", lowered):
             continue
+        if "jazz voyeur club" in lowered and len(event_name) > 80:
+            continue
+        if len(event_name) < 3 or lowered in GENERIC_CARD_NAMES:
+            continue
+
         date_value, _ = parse_date_time(f"{day} {month} {year}")
         if not date_value:
             continue
+
         event = RawEvent(
             event_name=event_name,
             date=date_value,
-            time=default_time,
+            time=event_time,
             venue=source.venue_name,
-            ticket_price="",
-            description="",
-            musicians="",
+            ticket_price=default_price,
+            description=event_name,
+            musicians=_extract_musicians_from_text(event_name),
             event_link=page_url,
             source_url=source.source_url,
             source_id=source.source_id,
@@ -1271,8 +1660,6 @@ def extract_jazzvoyeur_schedule_events(html: str, source: SourceConfig, page_url
         seen.add(key)
         events.append(event)
     return events
-
-
 def extract_nempla_schedule_events(html: str, source: SourceConfig, page_url: str) -> list[RawEvent]:
     text = clean_text(BeautifulSoup(html, "html.parser").get_text(" ", strip=True))
     lowered_text = text.casefold()
@@ -1285,6 +1672,9 @@ def extract_nempla_schedule_events(html: str, source: SourceConfig, page_url: st
     for month, day, start_time, raw_name in NEMPLA_SCHEDULE_RE.findall(text):
         event_name = clean_text(re.sub(r"(?i)\b(?:QUIERO\s+IR|VER\s+AGENDA)\b.*$", "", raw_name))
         event_name = clean_text(event_name.strip(" -:#"))
+        lowered_name = event_name.casefold()
+        if "jorge newbery" in lowered_name or "argentina" in lowered_name:
+            continue
         if len(event_name) < 3 or event_name.casefold() in GENERIC_CARD_NAMES:
             continue
         date_value, _ = parse_date_time(f"{day} {month} {year}")

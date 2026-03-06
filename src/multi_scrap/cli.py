@@ -14,13 +14,35 @@ from multi_scrap.exporters import export_events_to_csv
 from multi_scrap.pipeline import ScraperPipeline
 from multi_scrap.settings import build_settings
 from multi_scrap.sheets import GoogleSheetsWriter
-from multi_scrap.models import SourceConfig, sheet_header_for_language
+from multi_scrap.models import RawEvent, SourceConfig, sheet_header_for_language
 from multi_scrap.source_loader import load_sources_from_csv, load_sources_from_yaml
 from multi_scrap.utils.dates import monday_sunday_bounds
 from multi_scrap.week_filter import filter_events_for_week
 
 
 logger = logging.getLogger(__name__)
+
+FIELD_ALIASES = {
+    "event_name": "event_name",
+    "nombre": "event_name",
+    "nombre_del_evento": "event_name",
+    "date": "date",
+    "fecha": "date",
+    "time": "time",
+    "hora": "time",
+    "venue": "venue",
+    "venue_bar": "venue",
+    "recinto": "venue",
+    "recinto_bar": "venue",
+    "ticket_price": "ticket_price",
+    "price": "ticket_price",
+    "precio": "ticket_price",
+    "precio_de_entrada": "ticket_price",
+    "description": "description",
+    "descripcion": "description",
+    "musicians": "musicians",
+    "musicos": "musicians",
+}
 
 
 def _parse_week_start(value: str | None) -> date | None:
@@ -86,6 +108,33 @@ def _build_effective_sources(
     return effective
 
 
+def _normalize_required_field_name(field: str) -> str:
+    normalized = (field or "").strip().casefold().replace("/", "_").replace(" ", "_")
+    return FIELD_ALIASES.get(normalized, normalized)
+
+
+def _apply_quality_gate(
+    events: list[RawEvent],
+    required_fields: tuple[str, ...],
+) -> tuple[list[RawEvent], list[RawEvent]]:
+    if not required_fields:
+        return events, []
+
+    normalized_fields = tuple(_normalize_required_field_name(field) for field in required_fields if field.strip())
+    if not normalized_fields:
+        return events, []
+
+    passed = []
+    dropped = []
+    for event in events:
+        missing = [field for field in normalized_fields if not (getattr(event, field, "") or "").strip()]
+        if missing:
+            dropped.append(event)
+            continue
+        passed.append(event)
+    return passed, dropped
+
+
 def run_weekly(args: argparse.Namespace) -> None:
     settings = build_settings()
     yaml_path = Path(args.sources_yaml)
@@ -113,6 +162,7 @@ def run_weekly(args: argparse.Namespace) -> None:
 
     weekly_events = filter_events_for_week(deduped, week_start, week_end)
     weekly_events.sort(key=lambda event: (event.date, event.time, event.venue, event.event_name))
+    weekly_events, dropped_by_quality_gate = _apply_quality_gate(weekly_events, settings.strict_required_fields)
 
     all_events_path = settings.output_dir / "all_events_deduped.csv"
     weekly_path = settings.output_dir / f"weekly_events_{week_start.isoformat()}_{week_end.isoformat()}.csv"
@@ -139,6 +189,8 @@ def run_weekly(args: argparse.Namespace) -> None:
         f"Total source runs: {len(result.source_summaries)}",
         f"Total events extracted (pre-dedup): {len(result.events)}",
         f"Total events after dedup: {len(deduped)}",
+        f"Quality gate required fields: {', '.join(settings.strict_required_fields) if settings.strict_required_fields else '(disabled)'}",
+        f"Quality gate dropped weekly events: {len(dropped_by_quality_gate)}",
         f"Weekly window: {week_start.isoformat()} -> {week_end.isoformat()}",
         f"Weekly events count: {len(weekly_events)}",
         f"CSV (all deduped): {all_events_path}",
@@ -157,6 +209,12 @@ def run_weekly(args: argparse.Namespace) -> None:
     summary_path.write_text("\n".join(summary_lines), encoding="utf-8")
 
     print(f"Run complete. Weekly events: {len(weekly_events)}")
+    if settings.strict_required_fields:
+        print(
+            "Quality gate: "
+            f"{len(dropped_by_quality_gate)} dropped "
+            f"(required: {', '.join(settings.strict_required_fields)})"
+        )
     print(f"All events CSV: {all_events_path}")
     print(f"Weekly events CSV: {weekly_path}")
     print(f"Run summary: {summary_path}")

@@ -6,7 +6,9 @@ sources:
   enabled: true
   mode: static
   list_url: ''
-  include_link_patterns: []
+  include_link_patterns:
+  - tuentrada\.com/tuentrada/select
+  - prez\.ar
   exclude_link_patterns:
   - instagram\.com
   - facebook\.com
@@ -26,6 +28,7 @@ sources:
   list_url: https://www.passline.com/sitio/bebop-club
   include_link_patterns:
   - passline\.com/eventos-ficha-dvm
+  - passline\.com/sitio-evento
   exclude_link_patterns:
   - instagram\.com
   - facebook\.com

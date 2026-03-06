@@ -17,7 +17,7 @@ def parse_date_time(value: str | None) -> tuple[str, str]:
     text = value.strip()
     if ISO_DATE_RE.match(text):
         parsed = datetime.strptime(text, "%Y-%m-%d")
-        return parsed.date().isoformat(), "00:00"
+        return parsed.date().isoformat(), ""
     if ISO_DATETIME_RE.match(text):
         iso_text = text[:-1] + "+00:00" if text.endswith("Z") else text
         try:
@@ -28,8 +28,20 @@ def parse_date_time(value: str | None) -> tuple[str, str]:
     if TIME_RE.match(text):
         parsed_time = datetime.strptime(text, "%H:%M")
         return "", parsed_time.strftime("%H:%M")
+    normalized = text
+    normalized = re.sub(r"(?i)\b(?:hrs?|hs)\.?\b", "", normalized)
+    normalized = re.sub(r"(?i)\ba\s+las\b", " ", normalized)
+    normalized = re.sub(r"\s*-\s*", " ", normalized)
+    normalized = re.sub(r"\s+", " ", normalized).strip()
+    has_explicit_time = bool(
+        re.search(
+            r"(?i)\b([01]?\d|2[0-3])[:\.][0-5]\d\b|\b([1-9]|1[0-2])\s*(am|pm)\b",
+            normalized,
+        )
+    )
+
     dt = dateparser.parse(
-        text,
+        normalized,
         languages=["es", "en"],
         settings={
             "RETURN_AS_TIMEZONE_AWARE": False,
@@ -39,7 +51,7 @@ def parse_date_time(value: str | None) -> tuple[str, str]:
     )
     if not dt:
         return "", ""
-    return dt.date().isoformat(), dt.strftime("%H:%M")
+    return dt.date().isoformat(), dt.strftime("%H:%M") if has_explicit_time else ""
 
 
 def normalize_date(value: str | None) -> str:

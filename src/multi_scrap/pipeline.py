@@ -35,6 +35,13 @@ class ScraperPipeline:
     def __init__(self, settings: Settings):
         self.settings = settings
 
+    @staticmethod
+    def _needs_event_enrichment(events: list[RawEvent]) -> bool:
+        for event in events:
+            if event.event_name and event.date and (not event.ticket_price or not event.time or not event.musicians):
+                return True
+        return False
+
     def run(self, sources: Iterable[SourceConfig]) -> PipelineResult:
         all_events: list[RawEvent] = []
         summaries: list[SourceRunSummary] = []
@@ -107,7 +114,8 @@ class ScraperPipeline:
                 queue.append((link, depth + 1))
 
         has_valid_static_events = any(event.event_name and event.date for event in events)
-        should_try_playwright = self.settings.enable_playwright and not has_valid_static_events
+        needs_enrichment = self._needs_event_enrichment(events)
+        should_try_playwright = self.settings.enable_playwright and (not has_valid_static_events or needs_enrichment)
         if should_try_playwright:
             playwright_target = source.source_url or base_url
             rendered = render_html_with_playwright(playwright_target, self.settings)
@@ -134,6 +142,17 @@ class ScraperPipeline:
                     fetched = fetch_html(session, link, timeout_seconds=self.settings.request_timeout_seconds)
                     summary.fetched_pages += 1
                     if not fetched.ok:
+                        rendered_child = render_html_with_playwright(link, self.settings)
+                        if rendered_child.ok:
+                            events.extend(
+                                extract_events_from_html(
+                                    rendered_child.html,
+                                    source,
+                                    rendered_child.final_url or link,
+                                )
+                            )
+                        else:
+                            summary.errors.append(format_error("playwright-child", rendered_child.error))
                         continue
                     events.extend(extract_events_from_html(fetched.html, source, fetched.url))
 

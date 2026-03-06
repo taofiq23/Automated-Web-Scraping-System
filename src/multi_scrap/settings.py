@@ -30,6 +30,11 @@ class Settings:
     google_sheet_prefix: str = os.getenv("GOOGLE_SHEET_PREFIX", "Week")
     google_price_currency_label: str = os.getenv("GOOGLE_PRICE_CURRENCY_LABEL", "ARS")
     sheet_header_language: str = os.getenv("SHEET_HEADER_LANGUAGE", "es")
+    strict_required_fields: tuple[str, ...] = tuple(
+        item.strip().casefold()
+        for item in os.getenv("STRICT_REQUIRED_FIELDS", "").split(",")
+        if item.strip()
+    )
 
 
 def build_settings() -> Settings:
@@ -52,6 +57,11 @@ def build_settings() -> Settings:
         google_sheet_prefix=os.getenv("GOOGLE_SHEET_PREFIX", "Week"),
         google_price_currency_label=os.getenv("GOOGLE_PRICE_CURRENCY_LABEL", "ARS"),
         sheet_header_language=os.getenv("SHEET_HEADER_LANGUAGE", "es"),
+        strict_required_fields=tuple(
+            item.strip().casefold()
+            for item in os.getenv("STRICT_REQUIRED_FIELDS", "").split(",")
+            if item.strip()
+        ),
     )
     settings.output_dir.mkdir(parents=True, exist_ok=True)
     return settings

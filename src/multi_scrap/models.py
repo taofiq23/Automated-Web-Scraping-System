@@ -2,7 +2,25 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+import re
 from typing import Any
+import unicodedata
+
+
+DEDUP_TEXT_RE = re.compile(r"[^a-z0-9]+")
+
+
+def _dedup_canonical(value: str) -> str:
+    text = (value or "").strip().casefold()
+    if "ã" in text or "â" in text:
+        try:
+            text = text.encode("latin-1").decode("utf-8")
+        except UnicodeError:
+            pass
+    text = unicodedata.normalize("NFKD", text)
+    text = "".join(ch for ch in text if not unicodedata.combining(ch))
+    text = DEDUP_TEXT_RE.sub(" ", text).strip()
+    return text
 
 
 @dataclass(slots=True)
@@ -50,9 +68,9 @@ class RawEvent:
 
     def dedup_key(self) -> tuple[str, str, str]:
         return (
-            self.event_name.strip().casefold(),
+            _dedup_canonical(self.event_name),
             self.date.strip(),
-            self.venue.strip().casefold(),
+            _dedup_canonical(self.venue),
         )
 
     def as_sheet_row(self) -> list[str]:
